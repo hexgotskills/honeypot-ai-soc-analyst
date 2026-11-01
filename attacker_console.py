@@ -17,6 +17,7 @@ import threading
 import queue
 import subprocess
 import datetime
+import config
 
 try:
     import tkinter as tk
@@ -138,7 +139,8 @@ class AttackerConsoleApp:
         )
         target_lbl.pack(side=tk.LEFT, padx=(0, 6))
 
-        self.target_var = tk.StringVar(value="127.0.0.1")
+        default_target = getattr(config, "DECOY_BIND_HOST", "127.0.0.1")
+        self.target_var = tk.StringVar(value=default_target)
         self.target_entry = tk.Entry(
             target_frame,
             textvariable=self.target_var,

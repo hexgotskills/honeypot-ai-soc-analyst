@@ -1,4 +1,13 @@
 import os
+import sys
+
+# Load .env file for environment variables if present and not in pytest
+if "pytest" not in sys.modules and not any("pytest" in arg for arg in sys.argv):
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
 
 # Database file path – can be overridden via DATABASE_PATH env var.
 # If a relative path is given, resolve it relative to this config file.
