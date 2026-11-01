@@ -1,0 +1,57 @@
+services:
+  tcp_decoy:
+    build: .
+    command: python honeypot/tcp_decoy.py
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:2222:2222"
+    volumes:
+      - soc_data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/soc.db
+      - DECOY_BIND_HOST=0.0.0.0
+    env_file:
+      - .env
+
+  http_decoy:
+    build: .
+    command: python honeypot/http_decoy.py
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - soc_data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/soc.db
+      - DECOY_BIND_HOST=0.0.0.0
+    env_file:
+      - .env
+
+  worker:
+    build: .
+    command: python worker.py
+    restart: unless-stopped
+    volumes:
+      - soc_data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/soc.db
+    env_file:
+      - .env
+
+  dashboard:
+    build: .
+    command: python app.py
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - soc_data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/soc.db
+      - DASHBOARD_HOST=0.0.0.0
+    env_file:
+      - .env
+
+volumes:
+  soc_data:
+

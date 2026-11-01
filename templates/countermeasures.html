@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Countermeasures - Honeypot SOC</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body { font-family: 'Satoshi', sans-serif; background: #111; color: #eee; padding: 1rem; }
+    h1, h2 { font-family: 'Satoshi', sans-serif; color: #7cf; }
+    nav a { color: #7cf; text-decoration: none; margin-right: 1.5rem; font-family: 'Satoshi', sans-serif; }
+    nav { margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #333; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 1.5rem; font-family: 'Satoshi', sans-serif; }
+    th, td { border: 1px solid #444; padding: 0.4rem 0.7rem; text-align: left; font-size: 0.85rem; }
+    th { background: #222; }
+    tr:nth-child(even) { background: #1a1a1a; }
+    .badge-active { background: #922; color: #fff; padding: 0.15rem 0.4rem; border-radius: 3px; font-weight: bold; }
+    .badge-inactive { background: #333; color: #aaa; padding: 0.15rem 0.4rem; border-radius: 3px; }
+    .card { background: #1e1e24; border: 1px solid #333; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; font-family: 'Satoshi', sans-serif; }
+    .btn { background: #333; color: #7cf; border: 1px solid #7cf; padding: 0.35rem 0.8rem; cursor: pointer; font-family: 'Satoshi', sans-serif; border-radius: 3px; }
+    .btn-danger { background: #722; color: #fff; border: 1px solid #933; }
+    .btn-success { background: #262; color: #fff; border: 1px solid #383; }
+    .alert-banner { background: #222; border-left: 4px solid #7cf; padding: 0.8rem 1rem; margin-bottom: 1.5rem; font-family: 'Satoshi', sans-serif; }
+    .alert-error { border-left-color: #f66; color: #f99; }
+    .alert-msg { border-left-color: #6f6; color: #9f9; }
+    input[type="text"] { background: #222; border: 1px solid #555; color: #eee; padding: 0.35rem 0.6rem; font-family: 'Satoshi', sans-serif; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/"><- Dashboard</a>
+    <a href="/history">History</a>
+    <a href="/analyses">Analyses</a>
+    <a href="/countermeasures" style="font-weight:bold;color:#fff;">Countermeasures</a>
+  </nav>
+
+  <h1>Application Countermeasures</h1>
+
+  {% if error %}
+    <div class="alert-banner alert-error">Error: {{ error }}</div>
+  {% endif %}
+
+  <!-- Deceptive Server Banners (Countermeasure) -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+      <h2 style="margin:0;font-size:1.15rem;color:#7cf;">Deceptive Server Banners</h2>
+      <span style="font-size:0.8rem;color:#2ecc71;font-weight:bold;">Active (Port 8080)</span>
+    </div>
+    <p style="font-size:0.85rem;color:#aaa;margin:0.2rem 0 0.8rem 0;">
+      Directed suspicious attempts to decoy sites: HTTP requests are answered with dynamically altered server signatures to mislead reconnaissance scanners.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:170px;">Timestamp</th>
+          <th style="width:130px;">Source IP</th>
+          <th>Request</th>
+          <th style="width:80px;">Status</th>
+          <th>Decoy Server Header (Altered)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ev in deceptive_events %}
+        <tr>
+          <td>{{ ev.timestamp }}</td>
+          <td><strong>{{ ev.source_ip }}</strong></td>
+          <td><code>{{ ev.metadata.get('method', 'GET') }} {{ ev.metadata.get('path', '/') }}</code></td>
+          <td>{{ ev.outcome or '200' }}</td>
+          <td><span style="color:#7cf;font-family:monospace;">{{ ev.metadata.get('server_banner', 'Apache/2.4.52 (Ubuntu)') }}</span></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" style="color:#888;">No suspicious attempts recorded yet. Run scenario T6 from the Attacker Console to test.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Auto-block setting -->
+  <div class="card">
+    <h2>Auto-Block Configuration</h2>
+    <p style="margin-bottom:0.6rem;font-size:0.9rem;">
+      Current Status:
+      {% if auto_block|lower == 'on' %}
+        <span class="badge-active" style="background:#282;">ON</span> &mdash; Source IPs of high-severity incidents are automatically quarantined.
+      {% else %}
+        <span class="badge-inactive">OFF</span> &mdash; Decoys do not auto-block attackers unless manually configured.
+      {% endif %}
+    </p>
+    <form method="post" action="/countermeasures/toggle">
+      <button type="submit" class="btn {% if auto_block|lower == 'on' %}btn-danger{% else %}btn-success{% endif %}">
+        Turn Auto-Block {% if auto_block|lower == 'on' %}OFF{% else %}ON{% endif %}
+      </button>
+    </form>
+  </div>
+
+  <!-- Manual block form -->
+  <div class="card">
+    <h2>Manual IP Block</h2>
+    <form method="post" action="/block" style="display:flex;gap:0.8rem;align-items:center;flex-wrap:wrap;">
+      <label>
+        IP Address:
+        <input type="text" name="ip" placeholder="e.g. 192.168.1.100" required>
+      </label>
+      <label>
+        Reason:
+        <input type="text" name="reason" placeholder="e.g. Suspicious scan activity" size="35">
+      </label>
+      <button type="submit" class="btn btn-danger">Block IP</button>
+    </form>
+  </div>
+
+  <!-- Blocklist table -->
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h2>Blocklist Entries</h2>
+    {% if blocks %}
+      <form method="post" action="/unblock-all" onsubmit="return confirm('Are you sure you want to unblock ALL active IP addresses?');">
+        <button type="submit" class="btn btn-danger">Unblock All</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>IP Address</th>
+        <th>Reason</th>
+        <th>Type</th>
+        <th>Created At</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in blocks %}
+      <tr>
+        <td>{{ b.id }}</td>
+        <td><strong>{{ b.ip }}</strong></td>
+        <td>{{ b.reason }}</td>
+        <td><em>{{ b.block_type }}</em></td>
+        <td>{{ b.created_at }}</td>
+        <td>
+          {% if b.active == 1 %}
+            <span class="badge-active">ACTIVE</span>
+          {% else %}
+            <span class="badge-inactive">UNBLOCKED ({{ b.unblocked_at or 'inactive' }})</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if b.active == 1 %}
+            <form method="post" action="/unblock" style="display:inline;">
+              <input type="hidden" name="ip" value="{{ b.ip }}">
+              <button type="submit" class="btn" style="padding:0.2rem 0.5rem;font-size:0.8rem;">Unblock</button>
+            </form>
+          {% else %}
+            <form method="post" action="/block" style="display:inline;">
+              <input type="hidden" name="ip" value="{{ b.ip }}">
+              <input type="hidden" name="reason" value="Re-blocked manually">
+              <button type="submit" class="btn btn-danger" style="padding:0.2rem 0.5rem;font-size:0.8rem;">Re-block</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7">No IP addresses currently in the blocklist.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <footer style="margin-top:3rem;padding:1.2rem 0;border-top:1px solid #333;text-align:center;font-size:0.85rem;color:#888;">
+    Micro Project by &mdash; Dhrup Dalvi (5th ICT), Safin Malik (5th ICT), Manveer Singh (5th ICT), Ayushi Joshi (5th ICT)
+  </footer>
+</body>
+</html>

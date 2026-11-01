@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Saved Analyses</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body { font-family: 'Satoshi', sans-serif; background: #111; color: #eee; padding: 1rem; }
+    h1, h2 { font-family: 'Satoshi', sans-serif; color: #7cf; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; font-family: 'Satoshi', sans-serif; }
+    th, td { border: 1px solid #444; padding: 0.4rem 0.6rem; text-align: left; font-size: 0.85rem; }
+    th { background: #222; }
+    tr:nth-child(even) { background: #1a1a1a; }
+    a { color: #7cf; text-decoration: none; font-family: 'Satoshi', sans-serif; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <nav style="margin-bottom:1.5rem;padding-bottom:0.5rem;border-bottom:1px solid #333;">
+    <a href="/">Dashboard</a> &nbsp;|&nbsp;
+    <a href="/history">History</a> &nbsp;|&nbsp;
+    <a href="/analyses" style="color:#fff;font-weight:bold;">Analyses</a> &nbsp;|&nbsp;
+    <a href="/countermeasures">Countermeasures</a>
+  </nav>
+
+  <h1>Saved Multi-Event Analyses</h1>
+  <p style="color:#aaa;">List of AI and mock analysis reports generated across multiple selected honeypot events.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:60px;">ID</th>
+        <th style="width:180px;">Created</th>
+        <th style="width:100px;">Events</th>
+        <th style="width:140px;">Provider</th>
+        <th>Summary</th>
+        <th style="width:100px;">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in analyses %}
+      <tr>
+        <td>#{{ a.id }}</td>
+        <td>{{ a.created_at }}</td>
+        <td>{{ a.event_ids | length }} events</td>
+        <td>{{ a.provider }}</td>
+        <td>{{ a.report.summary if a.report else 'N/A' }}</td>
+        <td><a href="/analysis/{{ a.id }}">View Report</a></td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" style="color:#888;">No multi-event analyses saved yet. Go to <a href="/history">History</a>, select events, and click Analyze Selected Events.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <footer style="margin-top:3rem;padding:1.2rem 0;border-top:1px solid #333;text-align:center;font-size:0.85rem;color:#888;">
+    Micro Project by &mdash; Dhrup Dalvi (5th ICT), Safin Malik (5th ICT), Manveer Singh (5th ICT), Ayushi Joshi (5th ICT)
+  </footer>
+</body>
+</html>
+

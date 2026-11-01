@@ -1,0 +1,68 @@
+/* Satoshi Font Family (Fontshare) */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/static/fonts/Satoshi-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/static/fonts/Satoshi-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/static/fonts/Satoshi-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #111;
+  color: #eee;
+  padding: 1rem;
+}
+
+h1, h2, h3 {
+  color: #7cf;
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 700;
+}
+
+button, input, select {
+  font-family: 'Satoshi', sans-serif;
+}
+
+code, pre {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+.table th, .table td {
+  border: 1px solid #444;
+  padding: 0.4rem 0.7rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.table th {
+  background: #222;
+  font-weight: 700;
+}
+.table tr:nth-child(even) {
+  background: #1a1a1a;
+}
+.high { color: #f66; font-weight: 700; }
+.medium { color: #fa0; font-weight: 700; }
+.low { color: #6f6; font-weight: 700; }
+.stats { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
+.stat { background: #222; padding: 0.7rem 1.2rem; border-radius: 6px; }
+.stat span { font-size: 1.6rem; display: block; font-weight: 700; }

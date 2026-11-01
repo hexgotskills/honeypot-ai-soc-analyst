@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="5">
+  <title>Honeypot SOC Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body {
+      font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 1.2rem;
+      margin: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: 'Satoshi', sans-serif;
+      color: #7cf;
+      margin-top: 1.5rem;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 2rem;
+      background: #181818;
+    }
+
+    th,
+    td {
+      border: 1px solid #333;
+      padding: 0.4rem 0.7rem;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    th {
+      background: #222;
+      color: #aaa;
+    }
+
+    tr:nth-child(even) {
+      background: #141414;
+    }
+
+    tr:hover {
+      background: #252525;
+    }
+
+    .high {
+      color: #f66;
+      font-weight: bold;
+    }
+
+    .medium {
+      color: #fa0;
+      font-weight: bold;
+    }
+
+    .low {
+      color: #6f6;
+      font-weight: bold;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat {
+      background: #1c1c1c;
+      padding: 0.8rem 1.2rem;
+      border-radius: 6px;
+      border: 1px solid #333;
+      min-width: 100px;
+    }
+
+    .stat span {
+      font-size: 1.6rem;
+      display: block;
+      font-weight: bold;
+      margin-top: 0.2rem;
+    }
+
+    /* Navigation Bar */
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid #333;
+    }
+
+    nav a {
+      color: #7cf;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+      color: #fff;
+    }
+
+    nav a.active {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .nav-right {
+      margin-left: auto;
+    }
+
+    .btn-clear {
+      background: #c0392b;
+      color: #fff;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Satoshi', sans-serif;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    .btn-clear:hover {
+      background: #e74c3c;
+    }
+
+    /* Graph & Analytics Containers */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-card {
+      background: #181818;
+      border: 1px solid #2d2d2d;
+      border-radius: 6px;
+      padding: 1rem;
+    }
+
+    .chart-card h3 {
+      margin-top: 0;
+      margin-bottom: 0.8rem;
+      font-size: 0.95rem;
+      color: #9ec5fe;
+      border-bottom: 1px solid #2a2a2a;
+      padding-bottom: 0.4rem;
+    }
+
+    /* Bar Row Layout */
+    .bar-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.82rem;
+    }
+
+    .bar-label {
+      width: 130px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #ccc;
+    }
+
+    .bar-track {
+      flex: 1;
+      background: #252525;
+      height: 18px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 0 0.6rem;
+      display: flex;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .bar-value {
+      width: 40px;
+      text-align: right;
+      color: #aaa;
+      font-weight: bold;
+    }
+
+    /* Timeline Histogram */
+    .timeline-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 120px;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .timeline-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .timeline-bar {
+      width: 100%;
+      background: #3498db;
+      border-radius: 2px 2px 0 0;
+      min-height: 4px;
+    }
+
+    .timeline-bar:hover {
+      background: #5dade2;
+    }
+
+    .timeline-lbl {
+      font-size: 0.65rem;
+      color: #777;
+      margin-top: 0.3rem;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      max-height: 40px;
+    }
+
+    .empty-notice {
+      color: #666;
+      font-style: italic;
+      font-size: 0.85rem;
+      padding: 1rem 0;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <a href="/" class="active">Dashboard</a>
+    <a href="/history">History</a>
+    <a href="/analyses">Analyses</a>
+    <a href="/countermeasures">Countermeasures</a>
+    <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;color:#2ecc71;">
+      <span
+        style="display:inline-block;width:8px;height:8px;background:#2ecc71;border-radius:50%;box-shadow:0 0 6px #2ecc71;"></span>
+      Live Auto-refresh (5s)
+    </div>
+    <div class="nav-right">
+      <form action="/clear-history" method="post"
+        onsubmit="return confirm('Clear all logs, events, detections, and incidents from the database?');">
+        <button type="submit" class="btn-clear">Clear Logs & History</button>
+      </form>
+    </div>
+  </nav>
+
+  <h1>Honeypot SOC Dashboard</h1>
+
+  <!-- Stats Counter Cards -->
+  <div class="stats">
+    <div class="stat">Events<span>{{ stats.events }}</span></div>
+    <div class="stat">Detections<span>{{ stats.detections }}</span></div>
+    <div class="stat">Incidents<span>{{ stats.incidents }}</span></div>
+    <div class="stat high">High<span>{{ stats.by_severity.high }}</span></div>
+    <div class="stat medium">Medium<span>{{ stats.by_severity.medium }}</span></div>
+    <div class="stat low">Low<span>{{ stats.by_severity.low }}</span></div>
+    <div class="stat">Active Blocks<span><a href="/countermeasures" style="color:#f66;text-decoration:none;"
+          title="View and manage blocked IPs">{{ stats.active_blocks }}</a></span></div>
+  </div>
+
+  <!-- Visual Threat Analytics & Graphs -->
+  <h2>Threat Analytics & Visualizations</h2>
+  <div class="analytics-grid">
+
+    <!-- Chart 1: Activity Timeline (Events / Min) -->
+    <div class="chart-card" style="grid-column: 1 / -1;">
+      <h3>Activity Timeline &mdash; Events per Minute (Last 30 Min)</h3>
+      {% if stats.events_per_minute %}
+      {% set max_cnt = 1 %}
+      {% for m, cnt in stats.events_per_minute %}
+      {% if cnt > max_cnt %}{% set max_cnt = cnt %}{% endif %}
+      {% endfor %}
+      <div class="timeline-container">
+        {% for minute, count in stats.events_per_minute %}
+        {% set h_pct = (count / max_cnt * 100) | round | int %}
+        <div class="timeline-col" title="{{ minute }}: {{ count }} events">
+          <div class="timeline-bar" style="height: {{ [h_pct, 6] | max }}%;"></div>
+          <div class="timeline-lbl">{{ minute[-6:] }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="font-size:0.75rem;color:#777;margin-top:0.4rem;text-align:right;">Peak in window: {{ max_cnt }}
+        events/min</div>
+      {% else %}
+      <div class="empty-notice">No events recorded in the last 30 minutes. Run attack scenarios from the Attacker
+        Console to visualize activity.</div>
+      {% endif %}
+    </div>
+
+    <!-- Chart 2: Event Types Distribution -->
+    <div class="chart-card">
+      <h3>Event Types Distribution</h3>
+      {% if stats.events_by_type %}
+      {% set total_types = stats.events %}
+      {% for etype, cnt in stats.events_by_type.items() %}
+      {% set pct = ((cnt / (total_types if total_types > 0 else 1)) * 100) | round(1) %}
+      <div class="bar-row">
+        <span class="bar-label" title="{{ etype }}">{{ etype }}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: {{ pct }}%; background: #3498db;"></div>
+        </div>
+        <span class="bar-value">{{ cnt }}</span>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-notice">No event types recorded yet.</div>
+      {% endif %}
+    </div>
+
+    <!-- Chart 3: Detection Rules Triggered -->
+    <div class="chart-card">
+      <h3>Detection Rules Triggered</h3>
+      {% if stats.detections_by_rule %}
+      {% set max_rule = 1 %}
+      {% for r, cnt in stats.detections_by_rule.items() %}
+      {% if cnt > max_rule %}{% set max_rule = cnt %}{% endif %}
+      {% endfor %}
+      {% for rule_id, cnt in stats.detections_by_rule.items() %}
+      {% set pct = (cnt / max_rule * 100) | round | int %}
+      <div class="bar-row">
+        <span class="bar-label" title="{{ rule_id }}">{{ rule_id }}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: {{ pct }}%; background: #e67e22;"></div>
+        </div>
+        <span class="bar-value">{{ cnt }}</span>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-notice">No detection rules triggered yet.</div>
+      {% endif %}
+    </div>
+
+    <!-- Chart 4: Incidents by Severity -->
+    <div class="chart-card">
+      <h3>Incident Severity Breakdown</h3>
+      {% set total_inc = stats.incidents %}
+      {% if total_inc > 0 %}
+      <div class="bar-row">
+        <span class="bar-label" style="color:#f66;">High</span>
+        <div class="bar-track">
+          <div class="bar-fill"
+            style="width: {{ (stats.by_severity.high / total_inc * 100) | round }}%; background: #e74c3c;"></div>
+        </div>
+        <span class="bar-value">{{ stats.by_severity.high }}</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label" style="color:#fa0;">Medium</span>
+        <div class="bar-track">
+          <div class="bar-fill"
+            style="width: {{ (stats.by_severity.medium / total_inc * 100) | round }}%; background: #f39c12;"></div>
+        </div>
+        <span class="bar-value">{{ stats.by_severity.medium }}</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label" style="color:#6f6;">Low</span>
+        <div class="bar-track">
+          <div class="bar-fill"
+            style="width: {{ (stats.by_severity.low / total_inc * 100) | round }}%; background: #2ecc71;"></div>
+        </div>
+        <span class="bar-value">{{ stats.by_severity.low }}</span>
+      </div>
+      {% else %}
+      <div class="empty-notice">No incidents correlated yet.</div>
+      {% endif %}
+    </div>
+
+    <!-- Chart 5: Top Attacker IPs -->
+    <div class="chart-card">
+      <h3>Top Attacker Source IPs</h3>
+      {% if stats.top_ips %}
+      {% set max_ip = stats.top_ips[0][1] if stats.top_ips else 1 %}
+      {% for ip, cnt in stats.top_ips %}
+      {% set pct = (cnt / (max_ip if max_ip > 0 else 1) * 100) | round | int %}
+      <div class="bar-row">
+        <span class="bar-label" title="{{ ip }}">{{ ip }}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: {{ pct }}%; background: #9b59b6;"></div>
+        </div>
+        <span class="bar-value">{{ cnt }}</span>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-notice">No attacker IPs observed yet.</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Recent Incidents Table -->
+  <h2>Recent Incidents</h2>
+  <table>
+    <tr>
+      <th>ID</th>
+      <th>Source IP</th>
+      <th>Severity</th>
+      <th>Rules</th>
+      <th>Start</th>
+      <th>End</th>
+    </tr>
+    {% for inc in incidents %}
+    <tr>
+      <td><a href="/incident/{{ inc.id }}" style="color:#7cf">{{ inc.id }}</a></td>
+      <td>{{ inc.source_ip }}</td>
+      <td class="{{ inc.severity }}">{{ inc.severity }}</td>
+      <td>{{ inc.rule_ids | join(', ') }}</td>
+      <td>{{ inc.start_time }}</td>
+      <td>{{ inc.end_time }}</td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="6">No incidents yet.</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <!-- Recent Events Table -->
+  <h2>Recent Events (last 50)</h2>
+  <table>
+    <tr>
+      <th>ID</th>
+      <th>Timestamp</th>
+      <th>Source IP</th>
+      <th>Service</th>
+      <th>Type</th>
+      <th>Outcome</th>
+    </tr>
+    {% for ev in events %}
+    <tr>
+      <td><a href="/event/{{ ev.id }}" style="color:#7cf">{{ ev.id }}</a></td>
+      <td>{{ ev.timestamp }}</td>
+      <td>{{ ev.source_ip }}</td>
+      <td>{{ ev.service }}</td>
+      <td>{{ ev.event_type }}</td>
+      <td>{{ ev.outcome }}</td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="6">No events yet.</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <footer
+    style="margin-top:3rem;padding:1.2rem 0;border-top:1px solid #333;text-align:center;font-size:0.85rem;color:#888;">
+    Micro Project by &mdash; Dhrup Dalvi (5th ICT), Safin Malik (5th ICT), Manveer Singh (5th ICT), Ayushi Joshi (5th
+    ICT)
+  </footer>
+</body>
+
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Event History</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body { font-family: 'Satoshi', sans-serif; background: #111; color: #eee; padding: 1rem; }
+    h1, h2 { font-family: 'Satoshi', sans-serif; color: #7cf; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 1.5rem; font-family: 'Satoshi', sans-serif; }
+    th, td { border: 1px solid #444; padding: 0.35rem 0.5rem; text-align: left; font-size: 0.85rem; }
+    th { background: #222; }
+    tr:nth-child(even) { background: #1a1a1a; }
+    a { color: #7cf; text-decoration: none; font-family: 'Satoshi', sans-serif; }
+    a:hover { text-decoration: underline; }
+    input[type="text"], select { background: #222; color: #eee; border: 1px solid #444; padding: 0.3rem 0.5rem; font-family: 'Satoshi', sans-serif; }
+    button { font-family: 'Satoshi', sans-serif; }
+    .filter-bar { background: #181824; border: 1px solid #333; padding: 0.8rem; margin-bottom: 1.5rem; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
+    .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .pagination { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 2rem; }
+    .btn-action { background: #224; color: #7cf; border: 1px solid #7cf; padding: 0.4rem 0.9rem; cursor: pointer; }
+    .btn-secondary { background: #333; color: #ccc; border: 1px solid #555; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <nav style="margin-bottom:1.5rem;padding-bottom:0.5rem;border-bottom:1px solid #333;">
+    <a href="/">Dashboard</a> &nbsp;|&nbsp;
+    <a href="/history" style="color:#fff;font-weight:bold;">History</a> &nbsp;|&nbsp;
+    <a href="/analyses">Analyses</a> &nbsp;|&nbsp;
+    <a href="/countermeasures">Countermeasures</a>
+  </nav>
+
+  <h1>Event Telemetry History</h1>
+
+  <form method="get" action="/history" class="filter-bar">
+    <div>
+      <label>Search: </label>
+      <input type="text" name="q" value="{{ filters.q or '' }}" placeholder="IP, type, metadata...">
+    </div>
+    <div>
+      <label>Service: </label>
+      <input type="text" name="service" value="{{ filters.service or '' }}" placeholder="e.g. tcp, http" style="width:100px;">
+    </div>
+    <div>
+      <label>Source IP: </label>
+      <input type="text" name="source_ip" value="{{ filters.source_ip or '' }}" placeholder="IP address" style="width:120px;">
+    </div>
+    <div>
+      <label>Event Type: </label>
+      <input type="text" name="event_type" value="{{ filters.event_type or '' }}" placeholder="e.g. login_attempt" style="width:130px;">
+    </div>
+    <button type="submit" class="btn-action" style="padding:0.3rem 0.8rem;">Filter</button>
+    <a href="/history" style="color:#aaa;font-size:0.85rem;margin-left:0.5rem;">Reset</a>
+  </form>
+
+  <form method="post" action="/analyze-events" id="multiEventForm">
+    <div class="action-bar">
+      <div>
+        <button type="button" class="btn-secondary" onclick="toggleAll(true)">Select All Visible</button>
+        <button type="button" class="btn-secondary" onclick="toggleAll(false)">Clear Selection</button>
+        <span id="selectCount" style="margin-left:0.8rem;color:#888;font-size:0.85rem;">0 selected</span>
+      </div>
+      <div>
+        <button type="submit" class="btn-action">Analyze Selected Events</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30px;"><input type="checkbox" id="masterCheckbox" onclick="toggleAll(this.checked)"></th>
+          <th>ID</th>
+          <th>Timestamp</th>
+          <th>Source IP</th>
+          <th>Service</th>
+          <th>Event Type</th>
+          <th>Outcome</th>
+          <th>Rule Hits</th>
+          <th>Incident</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ev in events %}
+        <tr>
+          <td><input type="checkbox" name="event_ids" value="{{ ev.id }}" class="ev-check" onchange="updateCount()"></td>
+          <td><a href="/event/{{ ev.id }}">{{ ev.fmt_id }}</a></td>
+          <td>{{ ev.timestamp }}</td>
+          <td>{{ ev.source_ip }}</td>
+          <td>{{ ev.service }}</td>
+          <td>{{ ev.event_type }}</td>
+          <td>{{ ev.outcome }}</td>
+          <td style="color:#fa0;">{{ ev.rule_hits if ev.rule_hits else '-' }}</td>
+          <td>
+            {% if ev.incident_id %}
+              <a href="/incident/{{ ev.incident_id }}">#{{ ev.incident_id }}</a>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" style="color:#888;">No events found matching criteria.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </form>
+
+  <div class="pagination">
+    {% if page > 1 %}
+      <a href="/history?page={{ page - 1 }}&service={{ filters.service or '' }}&source_ip={{ filters.source_ip or '' }}&event_type={{ filters.event_type or '' }}&q={{ filters.q or '' }}" class="btn-secondary">&lt; Previous</a>
+    {% endif %}
+    <span style="color:#888;font-size:0.85rem;">Page {{ page }} of {{ total_pages if total_pages > 0 else 1 }}</span>
+    {% if page < total_pages %}
+      <a href="/history?page={{ page + 1 }}&service={{ filters.service or '' }}&source_ip={{ filters.source_ip or '' }}&event_type={{ filters.event_type or '' }}&q={{ filters.q or '' }}" class="btn-secondary">Next &gt;</a>
+    {% endif %}
+  </div>
+
+  <script>
+    function updateCount() {
+      const checks = document.querySelectorAll('.ev-check:checked');
+      document.getElementById('selectCount').innerText = checks.length + ' selected (max 100)';
+    }
+    function toggleAll(val) {
+      const checks = document.querySelectorAll('.ev-check');
+      checks.forEach(c => c.checked = val);
+      document.getElementById('masterCheckbox').checked = val;
+      updateCount();
+    }
+  </script>
+
+  <footer style="margin-top:3rem;padding:1.2rem 0;border-top:1px solid #333;text-align:center;font-size:0.85rem;color:#888;">
+    Micro Project by &mdash; Dhrup Dalvi (5th ICT), Safin Malik (5th ICT), Manveer Singh (5th ICT), Ayushi Joshi (5th ICT)
+  </footer>
+</body>
+</html>
+

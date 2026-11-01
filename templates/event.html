@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Event {{ event.id }}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body { font-family: 'Satoshi', sans-serif; background: #111; color: #eee; padding: 1rem; }
+    h1, h2 { font-family: 'Satoshi', sans-serif; color: #7cf; }
+    nav a { color: #7cf; text-decoration: none; margin-right: 1.5rem; font-family: 'Satoshi', sans-serif; }
+    nav { margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #333; }
+    dl { display: grid; grid-template-columns: 160px auto; gap: 0.4rem 1rem; margin-bottom: 2rem; font-family: 'Satoshi', sans-serif; }
+    dt { font-weight: bold; color: #aaa; }
+    .card { background: #1e1e24; border: 1px solid #333; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; }
+    .btn { background: #333; color: #7cf; border: 1px solid #7cf; padding: 0.35rem 0.8rem; cursor: pointer; font-family: 'Satoshi', sans-serif; border-radius: 3px; }
+    .btn-danger { background: #722; color: #fff; border: 1px solid #933; }
+    pre { background: #000; padding: 0.8rem; border: 1px solid #333; overflow-x: auto; color: #6f6; font-family: 'Courier New', monospace; }
+    .badge-active { background: #922; color: #fff; padding: 0.15rem 0.4rem; border-radius: 3px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/"><- Dashboard</a>
+    <a href="/history">History</a>
+    <a href="/countermeasures">Countermeasures</a>
+  </nav>
+
+  <h1>Event #{{ event.id }}</h1>
+
+  <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <strong>Source IP:</strong> <span style="font-size:1.1rem;color:#7cf;">{{ event.source_ip }}</span>
+      {% if is_blocked %}
+        <span class="badge-active" style="margin-left:0.6rem;">BLOCKED</span>
+      {% endif %}
+    </div>
+    <div>
+      {% if is_blocked %}
+        <form method="post" action="/unblock" style="display:inline;">
+          <input type="hidden" name="ip" value="{{ event.source_ip }}">
+          <button type="submit" class="btn">Unblock IP</button>
+        </form>
+      {% else %}
+        <form method="post" action="/block" style="display:inline;">
+          <input type="hidden" name="ip" value="{{ event.source_ip }}">
+          <input type="hidden" name="reason" value="Blocked from Event #{{ event.id }}">
+          <button type="submit" class="btn btn-danger">Block Source IP</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <dl>
+    <dt>Timestamp</dt><dd>{{ event.timestamp }}</dd>
+    <dt>Service</dt><dd>{{ event.service }}</dd>
+    <dt>Event Type</dt><dd>{{ event.event_type }}</dd>
+    <dt>Outcome</dt><dd>{{ event.outcome }}</dd>
+  </dl>
+
+  <h2>Event Metadata</h2>
+  <pre>{{ event.metadata | tojson(indent=2) }}</pre>
+
+  <p style="color:#888;font-size:0.85rem;margin-top:2rem;">
+    * Note: Blocking this source IP instructs the honeypot decoys to refuse future connections. It is an application-level block, not a firewall rule.
+  </p>
+
+  <footer style="margin-top:3rem;padding:1.2rem 0;border-top:1px solid #333;text-align:center;font-size:0.85rem;color:#888;">
+    Micro Project by &mdash; Dhrup Dalvi (5th ICT), Safin Malik (5th ICT), Manveer Singh (5th ICT), Ayushi Joshi (5th ICT)
+  </footer>
+</body>
+</html>
+

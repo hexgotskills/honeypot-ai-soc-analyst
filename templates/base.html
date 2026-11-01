@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Honeypot SOC{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <nav class="nav" style="display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;padding-bottom:0.8rem;border-bottom:1px solid #333;">
+    <a href="/" style="color:#7cf;text-decoration:none;font-weight:bold;">Dashboard</a>
+    <a href="/history" style="color:#7cf;text-decoration:none;">History</a>
+    <a href="/analyses" style="color:#7cf;text-decoration:none;">Analyses</a>
+    <a href="/countermeasures" style="color:#7cf;text-decoration:none;">Countermeasures</a>
+    <div style="margin-left:auto;">
+      <form action="/clear-history" method="post" style="display:inline;" onsubmit="return confirm('Clear all logs, events, detections, and incidents from the database?');">
+        <button type="submit" style="background:#c0392b;color:#fff;border:none;padding:0.4rem 0.8rem;border-radius:4px;cursor:pointer;font-family:'Satoshi', sans-serif;font-weight:bold;font-size:0.85rem;">Clear Logs & History</button>
+      </form>
+    </div>
+  </nav>
+  <main>{% block content %}{% endblock %}</main>
+  <footer style="margin-top:3rem;padding:1.2rem 0;border-top:1px solid #333;text-align:center;font-size:0.85rem;color:#888;">
+    Micro Project by &mdash; Dhrup Dalvi (5th ICT), Safin Malik (5th ICT), Manveer Singh (5th ICT), Ayushi Joshi (5th ICT)
+  </footer>
+</body>
+</html>
+

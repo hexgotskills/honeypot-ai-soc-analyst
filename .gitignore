@@ -1,0 +1,25 @@
+# Environment variables and secrets (CRITICAL: never commit)
+.env
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.bak
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Database and runtime data
+data/*.db
+data/*.log
+data/worker_heartbeat
+*.db
+results.csv
+
+# Pytest & test cache
+.pytest_cache/
+.coverage
+htmlcov/

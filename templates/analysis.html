@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Analysis #{{ analysis.id }}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body { font-family: 'Satoshi', sans-serif; background: #111; color: #eee; padding: 1rem; }
+    h1, h2, h3 { font-family: 'Satoshi', sans-serif; color: #7cf; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; font-family: 'Satoshi', sans-serif; }
+    th, td { border: 1px solid #444; padding: 0.35rem 0.6rem; text-align: left; font-size: 0.85rem; }
+    th { background: #222; }
+    tr:nth-child(even) { background: #1a1a1a; }
+    a { color: #7cf; text-decoration: none; font-family: 'Satoshi', sans-serif; }
+    a:hover { text-decoration: underline; }
+    .box { background:#1a1a2e; border:1px solid #444; padding:1rem; margin-bottom:1.5rem; border-radius:4px; font-family: 'Satoshi', sans-serif; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
+  </style>
+</head>
+<body>
+  <nav style="margin-bottom:1.5rem;padding-bottom:0.5rem;border-bottom:1px solid #333;">
+    <a href="/">Dashboard</a> &nbsp;|&nbsp;
+    <a href="/history">History</a> &nbsp;|&nbsp;
+    <a href="/analyses">Analyses</a> &nbsp;|&nbsp;
+    <a href="/countermeasures">Countermeasures</a>
+  </nav>
+
+  <h1>Multi-Event Analysis #{{ analysis.id }}</h1>
+  <p style="color:#aaa;margin-top:-0.5rem;">
+    Generated on {{ analysis.created_at }} &nbsp;|&nbsp;
+    Provider: <span style="color:#7cf;">{{ analysis.provider }}</span> &nbsp;|&nbsp;
+    Scope: {{ analysis.event_ids | length }} events
+  </p>
+
+  {% set rpt = analysis.report %}
+
+  {% if rpt.ai_error %}
+    <div style="background:#3d2c00;border:1px solid #fa0;padding:0.8rem;margin-bottom:1.5rem;border-radius:4px;color:#fa0;">
+      <strong>Notice:</strong> {{ rpt.ai_error }} (Displaying fallback report generated from local telemetry).
+    </div>
+  {% endif %}
+
+  <div class="box">
+    <div style="margin-bottom:1.2rem;">
+      <h3 style="margin:0 0 0.3rem 0;">Summary</h3>
+      <p style="margin:0;line-height:1.4;">{{ rpt.summary }}</p>
+    </div>
+
+    <div style="margin-bottom:1.2rem;">
+      <h3 style="margin:0 0 0.3rem 0;">Technical Analysis</h3>
+      <p style="margin:0;line-height:1.4;">{{ rpt.technical_analysis }}</p>
+    </div>
+
+    {% if rpt.likely_objective %}
+      <div style="margin-bottom:1.2rem;background:#151522;padding:0.6rem;border:1px solid #333;">
+        <strong style="color:#aaa;">Likely Objective:</strong> {{ rpt.likely_objective }}
+      </div>
+    {% endif %}
+
+    <div class="grid2" style="background:#151522;padding:0.6rem;border:1px solid #333;">
+      <div>
+        <strong style="color:#aaa;">Attack Stage:</strong> {{ rpt.attack_stage }}
+      </div>
+      <div>
+        <strong style="color:#aaa;">ATT&CK Technique:</strong> {{ rpt.attack_technique }}
+      </div>
+    </div>
+
+    {% if rpt.common_source_ips or rpt.time_span %}
+      <div class="grid2" style="background:#151522;padding:0.6rem;border:1px solid #333;">
+        <div>
+          <strong style="color:#aaa;">Source IPs:</strong>
+          {{ rpt.common_source_ips | join(', ') if rpt.common_source_ips else 'N/A' }}
+        </div>
+        <div>
+          <strong style="color:#aaa;">Time Span:</strong>
+          {{ rpt.time_span if rpt.time_span else 'N/A' }}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if rpt.event_type_counts %}
+      <div style="margin-bottom:1.2rem;">
+        <h3 style="margin:0 0 0.3rem 0;">Event Type Breakdown</h3>
+        <ul style="margin:0.2rem 0 0 1.2rem;padding:0;">
+          {% for etype, cnt in rpt.event_type_counts.items() %}
+            <li><strong>{{ etype }}:</strong> {{ cnt }} event(s)</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if rpt.sequence_of_actions %}
+      <div style="margin-bottom:1.2rem;">
+        <h3 style="margin:0 0 0.3rem 0;">Sequence of Actions</h3>
+        <ol style="margin:0.2rem 0 0 1.2rem;padding:0;color:#bbb;">
+          {% for action in rpt.sequence_of_actions %}
+            <li style="margin-bottom:0.2rem;">{{ action }}</li>
+          {% endfor %}
+        </ol>
+      </div>
+    {% endif %}
+
+    {% if rpt.evidence %}
+      <div style="margin-bottom:1.2rem;">
+        <h3 style="margin:0 0 0.3rem 0;">Evidence</h3>
+        <ul style="margin:0.2rem 0 0 1.2rem;padding:0;">
+          {% for item in rpt.evidence %}
+            <li style="margin-bottom:0.2rem;">
+              {% if item.event_id %}Event #{{ item.event_id }}: {% elif item.event_ids %}Events {{ item.event_ids | join(', ') }}: {% endif %}
+              {% if item.rule_id %}Rule {{ item.rule_id }}: {% elif item.rule_ids %}Rules {{ item.rule_ids | join(', ') }}: {% endif %}
+              {{ item.note or item.observation or '' }}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if rpt.recommended_actions %}
+      <div style="margin-bottom:1.2rem;">
+        <h3 style="margin:0 0 0.3rem 0;">Recommended Actions</h3>
+        <ol style="margin:0.2rem 0 0 1.2rem;padding:0;">
+          {% for act in rpt.recommended_actions %}
+            <li style="margin-bottom:0.2rem;">{{ act }}</li>
+          {% endfor %}
+        </ol>
+      </div>
+    {% endif %}
+
+    {% if rpt.false_positive_notes %}
+      <div style="margin-bottom:1.2rem;">
+        <h3 style="margin:0 0 0.3rem 0;">False Positive Analysis</h3>
+        <p style="margin:0;color:#ccc;">{{ rpt.false_positive_notes }}</p>
+      </div>
+    {% endif %}
+
+    <div style="border-top:1px solid #333;padding-top:0.6rem;font-size:0.85rem;color:#888;">
+      <div><strong>Confidence:</strong> {{ rpt.confidence }}</div>
+      {% if rpt.limitations %}
+        <div style="margin-top:0.3rem;"><strong>Limitations:</strong> {{ rpt.limitations }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <h2>Included Events ({{ events | length }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Timestamp</th>
+        <th>Source IP</th>
+        <th>Service</th>
+        <th>Event Type</th>
+        <th>Outcome</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ev in events %}
+      <tr>
+        <td><a href="/event/{{ ev.id }}">#{{ ev.id }}</a></td>
+        <td>{{ ev.timestamp }}</td>
+        <td>{{ ev.source_ip }}</td>
+        <td>{{ ev.service }}</td>
+        <td>{{ ev.event_type }}</td>
+        <td>{{ ev.outcome }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="color:#888;">No events found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <footer style="margin-top:3rem;padding:1.2rem 0;border-top:1px solid #333;text-align:center;font-size:0.85rem;color:#888;">
+    Micro Project by &mdash; Dhrup Dalvi (5th ICT), Safin Malik (5th ICT), Manveer Singh (5th ICT), Ayushi Joshi (5th ICT)
+  </footer>
+</body>
+</html>
+
