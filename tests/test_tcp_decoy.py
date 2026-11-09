@@ -75,5 +75,5 @@ def test_early_close(captured_events):
     # only connection_opened event recorded
     assert len(captured_events) == 1
     assert captured_events[0][2] == "connection_opened"
-    # ensure thread has finished
+    
     assert not thread.is_alive()
